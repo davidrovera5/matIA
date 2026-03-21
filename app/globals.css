@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    background-color: #1a120b;
+    color: #f0ebe5;
+    min-height: 100%;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(132, 204, 22, 0.2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(132, 204, 22, 0.4); }
+}
+
+/* ── Mate rain animation ──────────────────────────────── */
+@keyframes mate-fall {
+  0%   { transform: translateY(-60px) rotate(0deg);   opacity: 0; }
+  10%  { opacity: 0.55; }
+  85%  { opacity: 0.4; }
+  100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+}
+
+@keyframes mate-sway {
+  0%, 100% { margin-left: 0px; }
+  33%       { margin-left: 14px; }
+  66%       { margin-left: -10px; }
+}
+
+.mate-particle {
+  position: absolute;
+  top: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: mate-fall linear infinite, mate-sway ease-in-out infinite;
+  will-change: transform, opacity;
+}
+/* ──────────────────────────────────────────────────────── */
+
+@layer components {
+  /* Glassmorphism panel */
+  .glass {
+    background: rgba(38, 21, 9, 0.60);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(132, 204, 22, 0.12);
+  }
+
+  /* Stronger glass for modals / sidebars */
+  .glass-strong {
+    background: rgba(26, 18, 11, 0.88);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(132, 204, 22, 0.18);
+  }
+
+  /* Input base style */
+  .input-mate {
+    @apply w-full px-4 py-3 rounded-xl text-[#f0ebe5] placeholder-earth-500
+           border border-white/10 focus:outline-none focus:border-yerba-500
+           transition-colors;
+    background: rgba(38, 21, 9, 0.7);
+  }
+
+  /* Primary button */
+  .btn-yerba {
+    @apply px-6 py-3 bg-yerba-600 hover:bg-yerba-500 disabled:opacity-40
+           text-white font-bold rounded-xl transition-all
+           hover:shadow-glow-yerba active:scale-95;
+  }
+
+  /* Secondary button */
+  .btn-ghost {
+    @apply px-4 py-2 rounded-full text-sm font-medium transition-all
+           border border-white/10 hover:border-yerba-600/50
+           text-[#a89880] hover:text-[#f0ebe5];
+    background: rgba(38, 21, 9, 0.5);
+  }
+}
