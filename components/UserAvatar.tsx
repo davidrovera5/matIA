@@ -15,7 +15,7 @@ export default function UserAvatar({
   user, hasMate, isCurrentUser, stream, onActivityChange,
 }: Props) {
   const [editing, setEditing] = useState(false);
-  const [draft,   setDraft]   = useState(user.activity);
+  const [draft,   setDraft]   = useState(user.activity ?? "");
   const inputRef              = useRef<HTMLInputElement>(null);
 
   if (!editing && draft !== user.activity) setDraft(user.activity);

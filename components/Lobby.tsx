@@ -41,7 +41,7 @@ export default function Lobby({ onCreate, onJoin, error }: Props) {
   const [name,           setName]          = useState("");
   const [code,           setCode]          = useState("");
   const [mode,           setMode]          = useState<"home" | "join">("home");
-  const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0].emoji);
+  const [selectedAvatar, setSelectedAvatar] = useState<string>(AVATARS[0].emoji);
 
   const canCreate = name.trim().length > 0;
   const canJoin   = name.trim().length > 0 && code.trim().length > 0;
