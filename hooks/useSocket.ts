@@ -14,7 +14,7 @@ export function useSocket() {
   const [summary, setSummary] = useState<SessionSummary | null>(null);
 
   useEffect(() => {
-    const socket = io(window.location.origin, {
+    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL ?? window.location.origin, {
       path: "/socket.io",
       transports: ["polling", "websocket"],
       // ngrok free-tier shows an interstitial on first hit; this header

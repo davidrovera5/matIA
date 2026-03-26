@@ -378,7 +378,7 @@ app.prepare().then(() => {
 
   expressApp.all("/{*path}", (req, res) => handle(req, res));
 
-  const PORT = process.env.PORT || 3000;
+  const PORT = process.env.PORT || 8080;
   httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`> matIA ready on http://localhost:${PORT}`);
   });
