@@ -6,17 +6,22 @@
     "dev": "node server.js",
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
-    "lint": "next lint"
+    "lint": "next lint",
+    "tunnel": "npx localtunnel --port 3000"
   },
   "dependencies": {
     "autoprefixer": "^10.4.27",
+    "bufferutil": "^4.0.9",
     "express": "^5.2.1",
     "next": "^13.5.11",
+    "peer": "^1.0.2",
+    "peerjs": "^1.5.5",
     "postcss": "^8.5.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "utf-8-validate": "^6.0.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -26,6 +31,7 @@
     "@types/react-dom": "^18.3.7",
     "eslint": "^8.57.1",
     "eslint-config-next": "^13.5.11",
+    "localtunnel": "^2.0.2",
     "tailwindcss": "^3.4.19",
     "typescript": "^5"
   }

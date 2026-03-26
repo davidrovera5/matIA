@@ -8,14 +8,37 @@ export function useSocket() {
   const [room, setRoom] = useState<RoomState | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
   const [myId, setMyId] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const [error,           setError]           = useState<string>("");
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [summary, setSummary] = useState<SessionSummary | null>(null);
 
   useEffect(() => {
-    const socket = io({ path: "/socket.io" });
+    const socket = io(window.location.origin, {
+      path: "/socket.io",
+      transports: ["polling", "websocket"],
+      // ngrok free-tier shows an interstitial on first hit; this header
+      // tells it to skip the warning page for programmatic polling requests.
+      extraHeaders: { "ngrok-skip-browser-warning": "true" },
+    });
     socketRef.current = socket;
-    socket.on("connect", () => setMyId(socket.id ?? ""));
+    socket.on("connect", () => {
+      if (process.env.NODE_ENV !== "production")
+        console.log("✅ Socket conectado con ID:", socket.id);
+      setMyId(socket.id ?? "");
+      setConnectionError(null);
+    });
+    socket.on("connect_error", (err) => {
+      if (process.env.NODE_ENV !== "production")
+        console.warn("[Socket] error de conexión:", err.message);
+      setConnectionError("No se puede conectar al servidor. Reintentando…");
+    });
+    socket.on("disconnect", (reason) => {
+      if (process.env.NODE_ENV !== "production")
+        console.warn("[Socket] desconectado:", reason);
+      if (reason !== "io client disconnect")
+        setConnectionError("Conexión perdida. Reconectando…");
+    });
     socket.on("room-updated", (r: RoomState) => setRoom(r));
     socket.on("timer-tick", (timer) =>
       setRoom((prev) => prev ? { ...prev, timer } : prev)
@@ -32,16 +55,16 @@ export function useSocket() {
     return () => { socket.disconnect(); };
   }, []);
 
-  const createRoom = (userName: string) => {
+  const createRoom = (userName: string, avatar: string) => {
     setMessages([]);
-    socketRef.current?.emit("create-room", { userName }, ({ roomId, room }: any) => {
+    socketRef.current?.emit("create-room", { userName, avatar }, ({ roomId, room }: any) => {
       setRoomId(roomId);
       setRoom(room);
     });
   };
 
-  const joinRoom = (id: string, userName: string) => {
-    socketRef.current?.emit("join-room", { roomId: id, userName }, ({ room, error, messages }: any) => {
+  const joinRoom = (id: string, userName: string, avatar: string) => {
+    socketRef.current?.emit("join-room", { roomId: id, userName, avatar }, ({ room, error, messages }: any) => {
       if (error) { setError(error); return; }
       setRoomId(id);
       setRoom(room);
@@ -75,7 +98,8 @@ export function useSocket() {
   const dismissSummary = () => setSummary(null);
 
   return {
-    room, roomId, myId, error, messages, summary,
+    socketRef,
+    room, roomId, myId, error, connectionError, messages, summary,
     createRoom, joinRoom, leaveRoom, endRoom,
     passMate, timerToggle, timerReset,
     updateActivity, sendMessage, updateTimerConfig,

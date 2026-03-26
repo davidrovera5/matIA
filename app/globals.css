@@ -40,6 +40,25 @@
 }
 /* ──────────────────────────────────────────────────────── */
 
+/* ── Voice activity glow ──────────────────────────────── */
+@keyframes voice-glow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(132,204,22,0.4), 0 0 10px rgba(132,204,22,0.3); }
+  50%       { box-shadow: 0 0 0 3px rgba(132,204,22,0.8), 0 0 22px rgba(132,204,22,0.6); }
+}
+/* ──────────────────────────────────────────────────────── */
+
+/* ── Mate toast animation ─────────────────────────────── */
+@keyframes mateToastIn {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(50px) scale(0.4); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1);   }
+}
+
+@keyframes mateToastOut {
+  0%   { opacity: 1; transform: translateX(-50%) translateY(0)     scale(1);   }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(0.85); }
+}
+/* ──────────────────────────────────────────────────────── */
+
 @layer components {
   /* Glassmorphism panel */
   .glass {
