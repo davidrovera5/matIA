@@ -153,60 +153,43 @@ app.prepare().then(() => {
     next();
   });
 
-  // ── PeerJS — ws.Server with noServer:true, upgrades routed manually ────────
-  // createWebSocketServer lets peer use our pre-built wss instead of creating
-  // its own (which would auto-attach to a server and fight for upgrades).
-  // noServer:true means NO path-matching — we call handleUpgrade() directly,
-  // so there is no shouldHandle() check that could call socket.destroy().
-  // path:"/" → ExpressPeerServer mounts its HTTP routes at "/:key/id" etc.,
-  // which after Express strips "/peerjs" correctly resolve to /peerjs/:key/id.
+  // ── PeerJS — attach directly to httpServer, let it handle its own upgrades ──
+  // ExpressPeerServer creates its own ws.Server internally bound to httpServer
+  // and internally filters upgrades by path, so it coexists with Socket.IO
+  // (which has destroyUpgrade:false and its own listener on /socket.io).
+  // PeerJS with a noServer ws.Server — we route upgrades manually so Socket.IO
+  // and Next HMR don't fight for /peerjs upgrades. `createWebSocketServer`
+  // returns a noServer ws that doesn't auto-listen; we call handleUpgrade and
+  // emit "connection" which triggers PeerJS's internal _onSocketConnection
+  // (register client + wire message/close handlers including HEARTBEAT).
   let peerWss = null;
-  const peerServer = ExpressPeerServer(createServer(), {
+  const peerServer = ExpressPeerServer(httpServer, {
     debug: false,
     path: "/",
-    createWebSocketServer: (opts) => {
+    createWebSocketServer: () => {
       peerWss = new WebSocketServer({ noServer: true });
-      console.log(`[PeerJS] ws.Server ready (noServer, path: ${opts.path})`);
-
-      // WebSocket-level ping every 5 s keeps the TCP connection alive and
-      // detects dead sockets before PeerJS's 90 s alive_timeout fires.
-      const pingTimer = setInterval(() => {
-        peerWss.clients.forEach((ws) => {
-          if (ws.isAlive === false) { ws.terminate(); return; }
-          ws.isAlive = false;
-          ws.ping();
-        });
-      }, 5000);
-      peerWss.on("close", () => clearInterval(pingTimer));
-      peerWss.on("connection", (ws) => {
-        ws.isAlive = true;
-        ws.on("pong", () => { ws.isAlive = true; });
-      });
-
       return peerWss;
     },
   });
   expressApp.use("/peerjs", peerServer);
 
-  // ── Single WebSocket upgrade router ──────────────────────────────────────
-  // Socket.IO (destroyUpgrade:false) handles /socket.io via its own listener.
-  // We explicitly handle /peerjs with handleUpgrade() — no path matching, no
-  // risk of abortHandshake.  Everything else flows to Next.js if available.
+  // Manual upgrade router. Socket.IO has destroyUpgrade:false so it ignores
+  // non-/socket.io upgrades; we handle /peerjs explicitly. Next HMR and
+  // everything else falls through to Next's upgrade handler.
   const nextUpgrade =
     typeof app.getUpgradeHandler === "function" ? app.getUpgradeHandler() : null;
 
   httpServer.on("upgrade", (req, socket, head) => {
     const url = req.url ?? "";
+    if (url.startsWith("/socket.io")) return; // Socket.IO's own listener handles it
     if (url.startsWith("/peerjs")) {
       if (!peerWss) { socket.destroy(); return; }
       peerWss.handleUpgrade(req, socket, head, (ws) => {
         peerWss.emit("connection", ws, req);
       });
-    } else if (!url.startsWith("/socket.io") && nextUpgrade) {
-      nextUpgrade(req, socket, head);
+      return;
     }
-    // /socket.io → Socket.IO's own listener (registered by new Server(httpServer,...))
-    // /_next/webpack-hmr → nextUpgrade or browser retries
+    if (nextUpgrade) nextUpgrade(req, socket, head);
   });
 
   io.on("connection", (socket) => {
