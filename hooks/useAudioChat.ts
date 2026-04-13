@@ -43,7 +43,42 @@ export function useAudioChat(
     };
   }, []);
 
-  // ── Call a peer (with current local stream, or empty one if mic off) ─────
+  // Create a silent audio track so peers can answer/call while mic is off.
+  // We need *a track* for WebRTC to negotiate; MediaStream() without tracks
+  // results in answer() failing or the stream being closed when replaced.
+  const silentTrackRef = useRef<MediaStreamTrack | null>(null);
+  const getSilentStream = useCallback((): MediaStream => {
+    if (!silentTrackRef.current || silentTrackRef.current.readyState === "ended") {
+      const ctx = new AudioContext();
+      const dst = ctx.createMediaStreamDestination();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.value = 0; // silence
+      osc.connect(gain).connect(dst);
+      osc.start();
+      silentTrackRef.current = dst.stream.getAudioTracks()[0];
+      silentTrackRef.current.enabled = false;
+    }
+    return new MediaStream([silentTrackRef.current]);
+  }, []);
+
+  // Replace outgoing audio on every active call with a new track (or silence).
+  // Uses RTCRtpSender.replaceTrack — keeps the connection open, no renegotiation.
+  const replaceSentAudioTrack = useCallback((newTrack: MediaStreamTrack | null) => {
+    activeCalls.current.forEach((call) => {
+      const pc: RTCPeerConnection | undefined = call.peerConnection;
+      if (!pc) return;
+      pc.getSenders().forEach((sender) => {
+        if (sender.track && sender.track.kind === "audio") {
+          sender.replaceTrack(newTrack).catch((e) =>
+            LOG("replaceTrack failed:", e),
+          );
+        }
+      });
+    });
+  }, []);
+
+  // ── Call a peer (with current local stream, or silent one if mic off) ────
   const callPeer = useCallback((peerId: string, userId: string) => {
     const peer = peerRef.current;
     if (!peer || peer.destroyed || peer.disconnected) return;
@@ -52,8 +87,9 @@ export function useAudioChat(
       return;
     }
 
-    // PeerJS requires *some* MediaStream to call. If mic off, send empty stream.
-    const stream = localStreamRef.current ?? new MediaStream();
+    // PeerJS requires a stream with a track to negotiate. When mic is off,
+    // send a silent track — keeps the connection alive for receiving audio.
+    const stream = localStreamRef.current ?? getSilentStream();
     LOG(`calling ${userId} (${peerId}) with ${stream.getAudioTracks().length} track(s)`);
 
     let call: any;
@@ -79,16 +115,7 @@ export function useAudioChat(
       LOG(`call error with ${userId}:`, e);
       activeCalls.current.delete(userId);
     });
-  }, []);
-
-  // ── Recall everyone (used when local mic toggles) ────────────────────────
-  const recallAllPeers = useCallback(() => {
-    activeCalls.current.forEach((c) => { try { c.close(); } catch {} });
-    activeCalls.current.clear();
-    userToPeer.current.forEach((peerId, userId) => {
-      callPeer(peerId, userId);
-    });
-  }, [callPeer]);
+  }, [getSilentStream]);
 
   // ── Create the Peer once we're in a room (auto, no mic needed) ─────────
   useEffect(() => {
@@ -147,8 +174,8 @@ export function useAudioChat(
       peer.on("call", (call: any) => {
         const callerUserId = peerToUser.current.get(call.peer) ?? call.peer;
         LOG(`incoming call from ${callerUserId}`);
-        // Answer with current stream (or empty if mic off — receive-only)
-        const answerStream = localStreamRef.current ?? new MediaStream();
+        // Answer with current stream (or silent if mic off — receive-only)
+        const answerStream = localStreamRef.current ?? getSilentStream();
         call.answer(answerStream);
         activeCalls.current.set(callerUserId, call);
         call.on("stream", (remote: MediaStream) => {
@@ -257,19 +284,21 @@ export function useAudioChat(
     }
     localStreamRef.current = stream;
     setLocalStream(stream);
-    LOG("mic on → recalling all peers with audio");
-    recallAllPeers();
-  }, [recallAllPeers]);
+    const micTrack = stream.getAudioTracks()[0] ?? null;
+    LOG("mic on → swapping outgoing track to real mic");
+    replaceSentAudioTrack(micTrack);
+  }, [replaceSentAudioTrack]);
 
   const disableAudio = useCallback(() => {
-    LOG("mic off");
+    LOG("mic off → swapping outgoing track to silent");
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     localStreamRef.current = null;
     setLocalStream(null);
     setAudioError(null);
-    // Recall with empty stream so peers stop receiving our audio
-    recallAllPeers();
-  }, [recallAllPeers]);
+    // Replace with silent track — keeps connections alive so we still *receive*
+    const silent = getSilentStream().getAudioTracks()[0] ?? null;
+    replaceSentAudioTrack(silent);
+  }, [getSilentStream, replaceSentAudioTrack]);
 
   const toggleDeafen = useCallback(() => setIsDeafened((d) => !d), []);
 
