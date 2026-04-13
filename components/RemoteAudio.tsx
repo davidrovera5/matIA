@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 
-// Plays a single remote audio stream via an <audio> element
-function AudioPlayer({ stream }: { stream: MediaStream }) {
+function AudioPlayer({ stream, muted }: { stream: MediaStream; muted: boolean }) {
   const ref = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -14,20 +13,26 @@ function AudioPlayer({ stream }: { stream: MediaStream }) {
     }
   }, [stream]);
 
+  useEffect(() => {
+    const el = ref.current;
+    if (el) el.muted = muted;
+  }, [muted]);
+
   // eslint-disable-next-line jsx-a11y/media-has-caption
   return <audio ref={ref} autoPlay playsInline style={{ display: "none" }} />;
 }
 
-// Mount one AudioPlayer per remote peer — renders no visible DOM
 export default function RemoteAudio({
   remoteStreams,
+  deafened = false,
 }: {
   remoteStreams: Map<string, MediaStream>;
+  deafened?: boolean;
 }) {
   return (
     <>
       {Array.from(remoteStreams.entries()).map(([userId, stream]) => (
-        <AudioPlayer key={userId} stream={stream} />
+        <AudioPlayer key={userId} stream={stream} muted={deafened} />
       ))}
     </>
   );

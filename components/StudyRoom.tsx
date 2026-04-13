@@ -20,6 +20,7 @@ interface Props {
   myId: string;
   messages: ChatMessage[];
   isAudioActive: boolean;
+  isDeafened: boolean;
   localStream: MediaStream | null;
   remoteStreams: Map<string, MediaStream>;
   onPassMate: () => void;
@@ -30,6 +31,7 @@ interface Props {
   onUpdateTimerConfig: (w: number, b: number) => void;
   onEnableAudio: () => Promise<void>;
   onDisableAudio: () => void;
+  onToggleDeafen: () => void;
   onLeave: () => void;
   onEnd: () => void;
 }
@@ -94,10 +96,10 @@ const MATE_REMINDER_MS = 5 * 60 * 1000;
 
 export default function StudyRoom({
   room, roomId, myId, messages,
-  isAudioActive, localStream, remoteStreams,
+  isAudioActive, isDeafened, localStream, remoteStreams,
   onPassMate, onTimerToggle, onTimerReset,
   onUpdateActivity, onSendMessage, onUpdateTimerConfig,
-  onEnableAudio, onDisableAudio,
+  onEnableAudio, onDisableAudio, onToggleDeafen,
   onLeave, onEnd,
 }: Props) {
   const { users, currentMateIndex, hostId, timer, timerConfig } = room;
@@ -154,7 +156,7 @@ export default function StudyRoom({
     >
       {iHolder && <MateRain />}
       <MateBounce trigger={bounceTrigger} />
-      <RemoteAudio remoteStreams={remoteStreams} />
+      <RemoteAudio remoteStreams={remoteStreams} deafened={isDeafened} />
 
       {/* ── Document PiP portal ── renders into the floating window ───────── */}
       <PipPortal pipWindow={pipWindow}>
@@ -163,8 +165,10 @@ export default function StudyRoom({
           currentHolderName={currentHolder?.name ?? "..."}
           iHolder={iHolder}
           isAudioActive={isAudioActive}
+          isDeafened={isDeafened}
           onPassMate={onPassMate}
           onToggleMic={toggleMic}
+          onToggleDeafen={onToggleDeafen}
         />
       </PipPortal>
 
@@ -318,6 +322,20 @@ export default function StudyRoom({
               }}
             >
               {isAudioActive ? "🎙 Micrófono activo" : "🎙 Activar Micrófono"}
+            </button>
+
+            <button
+              onClick={onToggleDeafen}
+              className="px-5 py-3 font-semibold rounded-full text-sm transition-all hover:scale-105 active:scale-95"
+              title={isDeafened ? "Volver a escuchar" : "Ensordecer (no escuchar a nadie)"}
+              style={{
+                background: isDeafened ? "linear-gradient(135deg, #7f1d1d, #dc2626)" : "rgba(38,21,9,0.8)",
+                border:     isDeafened ? "1px solid rgba(239,68,68,0.5)"             : "1px solid rgba(132,204,22,0.15)",
+                color:      isDeafened ? "#fecaca"                                   : "#7a6050",
+                boxShadow:  isDeafened ? "0 0 14px rgba(239,68,68,0.3)"              : "none",
+              }}
+            >
+              {isDeafened ? "🔇 Ensordecido" : "🔊 Escuchando"}
             </button>
           </div>
 

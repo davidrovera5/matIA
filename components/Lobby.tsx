@@ -57,7 +57,6 @@ export default function Lobby({ onCreate, onJoin, error }: Props) {
 
       <div className="relative z-10 flex flex-col items-center gap-8 px-6 w-full max-w-md">
 
-        {/* Brand */}
         <div className="flex flex-col items-center gap-3 text-center">
           <Logo size="lg" />
           <div className="flex flex-col items-center gap-1">
@@ -78,12 +77,10 @@ export default function Lobby({ onCreate, onJoin, error }: Props) {
           </div>
         </div>
 
-        {/* ── Card ──────────────────────────────────────────────────────────── */}
         <div
           className="w-full rounded-3xl p-7 flex flex-col gap-5 shadow-2xl"
           style={{ background: "rgba(26,18,11,0.88)", border: "1px solid rgba(132,204,22,0.15)", backdropFilter: "blur(24px)" }}
         >
-          {/* Name input */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold" style={{ color: "#7a6050" }}>Tu nombre</label>
             <input
@@ -99,12 +96,20 @@ export default function Lobby({ onCreate, onJoin, error }: Props) {
             />
           </div>
 
-          {/* ── Avatar carousel ─────────────────────────────────────────────── */}
+          {/* ── Avatar grid ────────────────────────────────────────────────── */}
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold" style={{ color: "#7a6050" }}>
               Tu avatar
             </label>
-            <div className="flex items-center justify-between gap-1">
+            <div
+              className="grid gap-1.5 p-2 rounded-2xl overflow-y-auto"
+              style={{
+                gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
+                maxHeight: 180,
+                background: "rgba(38,21,9,0.4)",
+                border: "1px solid rgba(255,255,255,0.05)",
+              }}
+            >
               {AVATARS.map((av) => {
                 const selected = av.emoji === selectedAvatar;
                 return (
@@ -113,33 +118,29 @@ export default function Lobby({ onCreate, onJoin, error }: Props) {
                     onClick={() => setSelectedAvatar(av.emoji)}
                     title={av.label}
                     style={{
-                      width:        52,
-                      height:       60,
-                      borderRadius: 14,
-                      border:       selected
+                      aspectRatio: "1 / 1",
+                      borderRadius: 12,
+                      border:     selected
                         ? "2px solid #84cc16"
-                        : "2px solid rgba(255,255,255,0.07)",
-                      background:   selected
-                        ? "rgba(132,204,22,0.12)"
-                        : "rgba(38,21,9,0.6)",
-                      boxShadow:    selected
-                        ? "0 0 0 2px rgba(132,204,22,0.18), 0 0 14px rgba(132,204,22,0.3)"
+                        : "2px solid transparent",
+                      background: selected
+                        ? "rgba(132,204,22,0.14)"
+                        : "rgba(38,21,9,0.5)",
+                      boxShadow:  selected
+                        ? "0 0 12px rgba(132,204,22,0.35)"
                         : "none",
-                      display:      "flex",
-                      alignItems:   "center",
+                      display: "flex",
+                      alignItems: "center",
                       justifyContent: "center",
-                      transition:   "all 0.2s ease",
-                      cursor:       "pointer",
-                      flexShrink:   0,
+                      transition: "all 0.15s ease",
+                      cursor: "pointer",
                     }}
                   >
                     <span
                       style={{
-                        fontSize:  26,
-                        animation: selected
-                          ? `${av.anim} ${av.speed} ease-in-out infinite`
-                          : undefined,
-                        display: "block",
+                        fontSize:  22,
+                        animation: selected ? `${av.anim} ${av.speed} ease-in-out infinite` : undefined,
+                        display:   "block",
                         lineHeight: 1,
                       }}
                     >

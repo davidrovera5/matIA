@@ -40,8 +40,8 @@ export default function Home() {
   } = useSocket();
 
   const {
-    isAudioActive, localStream, remoteStreams, audioError,
-    enableAudio, disableAudio,
+    isAudioActive, isDeafened, localStream, remoteStreams, audioError,
+    enableAudio, disableAudio, toggleDeafen,
   } = useAudioChat(socketRef);
 
   const topError = connectionError ?? audioError;
@@ -77,6 +77,7 @@ export default function Home() {
         myId={myId}
         messages={messages}
         isAudioActive={isAudioActive}
+        isDeafened={isDeafened}
         localStream={localStream}
         remoteStreams={remoteStreams}
         onPassMate={passMate}
@@ -87,6 +88,7 @@ export default function Home() {
         onUpdateTimerConfig={updateTimerConfig}
         onEnableAudio={enableAudio}
         onDisableAudio={disableAudio}
+        onToggleDeafen={toggleDeafen}
         onLeave={leaveRoom}
         onEnd={endRoom}
       />

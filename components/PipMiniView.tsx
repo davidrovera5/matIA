@@ -6,8 +6,10 @@ interface Props {
   currentHolderName: string;
   iHolder:           boolean;
   isAudioActive:     boolean;
+  isDeafened:        boolean;
   onPassMate:        () => void;
   onToggleMic:       () => void;
+  onToggleDeafen:    () => void;
 }
 
 function fmt(s: number) {
@@ -19,7 +21,8 @@ function fmt(s: number) {
  * Uses only inline styles — no Tailwind classes, no external deps.
  */
 export default function PipMiniView({
-  timer, currentHolderName, iHolder, isAudioActive, onPassMate, onToggleMic,
+  timer, currentHolderName, iHolder, isAudioActive, isDeafened,
+  onPassMate, onToggleMic, onToggleDeafen,
 }: Props) {
   const timerColor = timer.phase === "work" ? "#84cc16" : "#60a5fa";
 
@@ -96,7 +99,22 @@ export default function PipMiniView({
             cursor:       "pointer",
           }}
         >
-          {isAudioActive ? "🎙 ON" : "🔇 OFF"}
+          {isAudioActive ? "🎙 ON" : "🎙 OFF"}
+        </button>
+
+        <button
+          onClick={onToggleDeafen}
+          style={{
+            padding:      "7px 12px",
+            borderRadius: 20,
+            border:       `1px solid ${isDeafened ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.1)"}`,
+            background:   isDeafened ? "rgba(127,29,29,0.8)" : "rgba(38,21,9,0.8)",
+            color:        isDeafened ? "#fecaca" : "#7a6050",
+            fontSize:     12,
+            cursor:       "pointer",
+          }}
+        >
+          {isDeafened ? "🔇" : "🔊"}
         </button>
       </div>
     </div>
