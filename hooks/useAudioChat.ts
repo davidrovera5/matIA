@@ -102,14 +102,40 @@ export function useAudioChat(socketRef: RefObject<Socket | null>) {
 
       const usePublicPeer = process.env.NEXT_PUBLIC_USE_PUBLIC_PEER === "true";
       const port = parseInt(window.location.port) || (window.location.protocol === "https:" ? 443 : 80);
+
+      // ICE servers: STUN for NAT discovery + public TURN for relay fallback
+      // when both peers are behind symmetric NATs. openrelay.metered.ca is a
+      // free public TURN — fine for a low-traffic app, replace with your own
+      // if you grow beyond their limits.
+      const iceServers = [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:global.stun.twilio.com:3478" },
+        {
+          urls: "turn:openrelay.metered.ca:80",
+          username: "openrelayproject",
+          credential: "openrelayproject",
+        },
+        {
+          urls: "turn:openrelay.metered.ca:443",
+          username: "openrelayproject",
+          credential: "openrelayproject",
+        },
+        {
+          urls: "turn:openrelay.metered.ca:443?transport=tcp",
+          username: "openrelayproject",
+          credential: "openrelayproject",
+        },
+      ];
+
       const peerConfig = usePublicPeer
-        ? { host: "0.peerjs.com", port: 443, secure: true, debug: 0 }
+        ? { host: "0.peerjs.com", port: 443, secure: true, debug: 0, config: { iceServers } }
         : {
             host:   window.location.hostname,
             port,
             path:   "/peerjs",
             secure: window.location.protocol === "https:",
             debug:  0,
+            config: { iceServers },
           };
 
       LOG(`creating Peer → ${peerConfig.host}:${peerConfig.port}`);
