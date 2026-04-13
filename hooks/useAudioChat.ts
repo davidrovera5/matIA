@@ -7,7 +7,10 @@ type RemoteStreams = Map<string, MediaStream>;
 
 const LOG = (...a: unknown[]) => console.log("[🎙 AudioChat]", ...a);
 
-export function useAudioChat(socketRef: RefObject<Socket | null>) {
+export function useAudioChat(
+  socketRef: RefObject<Socket | null>,
+  inRoom: boolean,
+) {
   // ── Refs ─────────────────────────────────────────────────────────────────
   const peerRef        = useRef<any>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -87,8 +90,9 @@ export function useAudioChat(socketRef: RefObject<Socket | null>) {
     });
   }, [callPeer]);
 
-  // ── Create the Peer once we have a socket (auto, no mic needed) ─────────
+  // ── Create the Peer once we're in a room (auto, no mic needed) ─────────
   useEffect(() => {
+    if (!inRoom) return;
     const socket = socketRef.current;
     if (!socket) { LOG("socket not ready"); return; }
 
@@ -224,8 +228,17 @@ export function useAudioChat(socketRef: RefObject<Socket | null>) {
       cancelled = true;
       socket.off("peer-announced", onPeerAnnounced);
       socket.off("peer-left",      onPeerLeft);
+      // Destroy the Peer when leaving the room so next entry starts fresh
+      activeCalls.current.forEach((c) => { try { c.close(); } catch {} });
+      activeCalls.current.clear();
+      peerRef.current?.destroy();
+      peerRef.current = null;
+      peerOpenRef.current = false;
+      peerToUser.current.clear();
+      userToPeer.current.clear();
+      setRemoteStreams(new Map());
     };
-  }, [socketRef, callPeer]);
+  }, [socketRef, callPeer, inRoom]);
 
   // ── Enable / disable microphone (only manages the local track) ───────────
   const enableAudio = useCallback(async () => {

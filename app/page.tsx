@@ -42,7 +42,7 @@ export default function Home() {
   const {
     isAudioActive, isDeafened, localStream, remoteStreams, audioError,
     enableAudio, disableAudio, toggleDeafen,
-  } = useAudioChat(socketRef);
+  } = useAudioChat(socketRef, !!(room && roomId));
 
   const topError = connectionError ?? audioError;
 
