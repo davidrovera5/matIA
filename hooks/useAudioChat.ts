@@ -5,9 +5,7 @@ import type { Socket } from "socket.io-client";
 
 type RemoteStreams = Map<string, MediaStream>;
 
-const LOG = process.env.NODE_ENV !== "production"
-  ? (...a: unknown[]) => console.log("[🎙 AudioChat]", ...a)
-  : () => {};
+const LOG = (...a: unknown[]) => console.log("[🎙 AudioChat]", ...a);
 
 export function useAudioChat(socketRef: RefObject<Socket | null>) {
   // ── Refs ─────────────────────────────────────────────────────────────────
@@ -134,7 +132,7 @@ export function useAudioChat(socketRef: RefObject<Socket | null>) {
             port,
             path:   "/peerjs",
             secure: window.location.protocol === "https:",
-            debug:  0,
+            debug:  2,
             config: { iceServers },
           };
 
