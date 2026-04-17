@@ -7,6 +7,13 @@ const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat
 export const metadata: Metadata = {
   title: "matIA",
   description: "Estudiá con amigos en la ronda de mate",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    viewportFit: "cover",
+  },
+  themeColor: "#1a120b",
 };
 
 export default function RootLayout({

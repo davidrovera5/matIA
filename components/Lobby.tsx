@@ -50,12 +50,12 @@ export default function Lobby({ onCreate, onJoin, error }: Props) {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
+      className="min-h-dscreen flex flex-col items-center justify-center relative overflow-hidden py-6 px-safe"
       style={{ background: "radial-gradient(ellipse at 50% 55%, #2c1a0e 0%, #1a120b 65%)" }}
     >
       <BgParticles />
 
-      <div className="relative z-10 flex flex-col items-center gap-8 px-6 w-full max-w-md">
+      <div className="relative z-10 flex flex-col items-center gap-6 sm:gap-8 px-4 sm:px-6 w-full max-w-md">
 
         <div className="flex flex-col items-center gap-3 text-center">
           <Logo size="lg" />
@@ -78,7 +78,7 @@ export default function Lobby({ onCreate, onJoin, error }: Props) {
         </div>
 
         <div
-          className="w-full rounded-3xl p-7 flex flex-col gap-5 shadow-2xl"
+          className="w-full rounded-3xl p-5 sm:p-7 flex flex-col gap-4 sm:gap-5 shadow-2xl"
           style={{ background: "rgba(26,18,11,0.88)", border: "1px solid rgba(132,204,22,0.15)", backdropFilter: "blur(24px)" }}
         >
           <div className="flex flex-col gap-1.5">
@@ -102,9 +102,8 @@ export default function Lobby({ onCreate, onJoin, error }: Props) {
               Tu avatar
             </label>
             <div
-              className="grid gap-1.5 p-2 rounded-2xl overflow-y-auto"
+              className="grid gap-1.5 p-2 rounded-2xl overflow-y-auto grid-cols-5 sm:grid-cols-6"
               style={{
-                gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
                 maxHeight: 180,
                 background: "rgba(38,21,9,0.4)",
                 border: "1px solid rgba(255,255,255,0.05)",

@@ -7,6 +7,8 @@
     background-color: #1a120b;
     color: #f0ebe5;
     min-height: 100%;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
   }
 
   /* Scrollbar */
@@ -14,6 +16,18 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(132, 204, 22, 0.2); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(132, 204, 22, 0.4); }
+}
+
+/* Dynamic viewport height — avoids iOS/Android address-bar jumps */
+.h-dscreen { height: 100vh; height: 100dvh; }
+.min-h-dscreen { min-height: 100vh; min-height: 100dvh; }
+
+/* Safe-area padding helpers for notches / home indicators */
+.pt-safe { padding-top: env(safe-area-inset-top); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+.px-safe {
+  padding-left:  env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* ── Mate rain animation ──────────────────────────────── */
@@ -76,9 +90,9 @@
     border: 1px solid rgba(132, 204, 22, 0.18);
   }
 
-  /* Input base style */
+  /* Input base style — font-size ≥16px to prevent iOS focus-zoom */
   .input-mate {
-    @apply w-full px-4 py-3 rounded-xl text-[#f0ebe5] placeholder-earth-500
+    @apply w-full px-4 py-3 rounded-xl text-base text-[#f0ebe5] placeholder-earth-500
            border border-white/10 focus:outline-none focus:border-yerba-500
            transition-colors;
     background: rgba(38, 21, 9, 0.7);

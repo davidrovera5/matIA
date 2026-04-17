@@ -35,8 +35,8 @@ export default function UserAvatar({
       {/* ── Card ─────────────────────────────────────────────────────────────── */}
       <div
         style={{
-          width:        96,
-          height:       112,
+          width:        "clamp(64px, 18vw, 96px)",
+          height:       "clamp(74px, 21vw, 112px)",
           borderRadius: 22,
           border:       isSpeaking
             ? "2px solid #84cc16"
@@ -65,7 +65,7 @@ export default function UserAvatar({
         }}
       >
         {/* ── Static avatar emoji ── */}
-        <span style={{ fontSize: 40, lineHeight: 1 }}>{user.avatar}</span>
+        <span style={{ fontSize: "clamp(26px, 8vw, 40px)", lineHeight: 1 }}>{user.avatar}</span>
 
         {/* ── Mate badge ── */}
         {hasMate && (
@@ -92,7 +92,7 @@ export default function UserAvatar({
       </span>
 
       {/* ── Activity ── */}
-      <div className="w-24 flex justify-center">
+      <div className="flex justify-center" style={{ width: "clamp(64px, 18vw, 96px)" }}>
         {isCurrentUser && editing ? (
           <input
             ref={inputRef}

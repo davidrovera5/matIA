@@ -67,14 +67,24 @@ export default function ChatSidebar({ messages, myId, onSend, onClose }: Props) 
   };
 
   return (
-    <div className="glass-strong flex flex-col w-80 h-full shadow-2xl shrink-0">
+    <>
+      {/* Mobile backdrop */}
+      <div
+        onClick={onClose}
+        className="md:hidden fixed inset-0 z-40"
+        style={{ background: "rgba(15,10,6,0.6)", backdropFilter: "blur(4px)" }}
+        aria-hidden
+      />
+      <div className="glass-strong flex flex-col shadow-2xl shrink-0
+                      fixed md:static inset-y-0 right-0 z-50
+                      w-[88vw] max-w-sm md:w-80 h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 shrink-0"
+      <div className="flex items-center justify-between px-4 py-3 shrink-0 pt-safe"
            style={{ borderBottom: "1px solid rgba(132,204,22,0.1)" }}>
         <h2 className="text-sm font-bold text-[#f0ebe5] tracking-wide">💬 Chat de sala</h2>
         <button onClick={onClose}
-          className="text-lg leading-none transition-colors hover:text-yerba-400"
-          style={{ color: "#4a3020" }}
+          className="text-xl leading-none transition-colors hover:text-yerba-400 w-8 h-8 flex items-center justify-center"
+          style={{ color: "#7a6050" }}
           aria-label="Cerrar chat">✕</button>
       </div>
 
@@ -109,7 +119,7 @@ export default function ChatSidebar({ messages, myId, onSend, onClose }: Props) 
       </div>
 
       {/* Input */}
-      <div className="px-3 py-3 shrink-0" style={{ borderTop: "1px solid rgba(132,204,22,0.1)" }}>
+      <div className="px-3 py-3 shrink-0 pb-safe" style={{ borderTop: "1px solid rgba(132,204,22,0.1)" }}>
         <div className="flex items-end gap-2 rounded-xl px-3 py-2"
              style={{ background: "rgba(38,21,9,0.7)", border: "1px solid rgba(132,204,22,0.12)" }}>
           <textarea
@@ -120,16 +130,17 @@ export default function ChatSidebar({ messages, myId, onSend, onClose }: Props) 
             placeholder="Mandá un mensaje…"
             rows={1}
             maxLength={500}
-            className="flex-1 bg-transparent text-sm resize-none outline-none max-h-28 leading-relaxed"
+            className="flex-1 bg-transparent text-base sm:text-sm resize-none outline-none max-h-28 leading-relaxed"
             style={{ color: "#f0ebe5" }}
           />
           <button onClick={submit} disabled={!draft.trim()}
-            className="text-lg pb-0.5 transition-colors"
+            className="text-xl sm:text-lg pb-0.5 transition-colors w-8 h-8 flex items-center justify-center shrink-0"
             style={{ color: draft.trim() ? "#84cc16" : "#3d2414" }}
             aria-label="Enviar">➤</button>
         </div>
-        <p className="text-[10px] mt-1 text-right" style={{ color: "#3d2414" }}>Shift+Enter para nueva línea</p>
+        <p className="hidden sm:block text-[10px] mt-1 text-right" style={{ color: "#3d2414" }}>Shift+Enter para nueva línea</p>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
