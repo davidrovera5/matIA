@@ -9,6 +9,8 @@ app            = "matia-app"
 primary_region = "gru"
 
 [build]
+  [build.args]
+    NEXT_PUBLIC_USE_PUBLIC_PEER = "true"
 
 [env]
   NODE_ENV = "production"

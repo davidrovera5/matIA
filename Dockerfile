@@ -4,6 +4,12 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# NEXT_PUBLIC_* vars are inlined at build time, so they must be passed
+# as build args, not runtime env. Matching Railway's behavior where
+# NEXT_PUBLIC_USE_PUBLIC_PEER=true routes audio through 0.peerjs.com.
+ARG NEXT_PUBLIC_USE_PUBLIC_PEER
+ENV NEXT_PUBLIC_USE_PUBLIC_PEER=$NEXT_PUBLIC_USE_PUBLIC_PEER
+
 # Native build tools needed by bufferutil / utf-8-validate
 RUN apk add --no-cache python3 make g++
 
