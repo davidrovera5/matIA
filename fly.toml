@@ -2,6 +2,8 @@
 # Region gru (São Paulo) is the closest to Argentina.
 # auto_stop is disabled because room state lives in RAM; stopping the
 # machine would drop all active rooms.
+# Capped to a single machine because room state lives in process RAM;
+# multiple machines would split clients across disjoint worlds.
 
 app            = "matia-app"
 primary_region = "gru"
@@ -12,22 +14,40 @@ primary_region = "gru"
   NODE_ENV = "production"
   PORT     = "8080"
 
-[http_service]
-  internal_port       = 8080
-  force_https         = true
+# Using [[services]] (not [http_service]) because we need an explicit
+# idle_timeout — PeerJS keeps long-lived WebSockets for signaling that
+# fly-proxy would otherwise close during quiet periods.
+[[services]]
+  internal_port        = 8080
+  protocol             = "tcp"
+  processes            = ["app"]
   auto_stop_machines   = false
   auto_start_machines  = true
   min_machines_running = 1
-  max_machines_running = 1
-  processes            = ["app"]
 
-  [http_service.concurrency]
+  [[services.ports]]
+    handlers     = ["tls", "http"]
+    port         = 443
+    force_https  = true
+    idle_timeout = 300
+
+  [[services.ports]]
+    handlers     = ["http"]
+    port         = 80
+    idle_timeout = 300
+
+  [services.concurrency]
     type       = "connections"
     soft_limit = 200
     hard_limit = 400
 
+  [services.tcp_checks]
+    interval     = "15s"
+    timeout      = "2s"
+    grace_period = "30s"
+
 [[vm]]
-  size        = "shared-cpu-1x"
-  memory      = "256mb"
-  cpu_kind    = "shared"
-  cpus        = 1
+  size     = "shared-cpu-1x"
+  memory   = "256mb"
+  cpu_kind = "shared"
+  cpus     = 1
