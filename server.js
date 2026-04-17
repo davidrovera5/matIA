@@ -164,14 +164,26 @@ app.prepare().then(() => {
   // (register client + wire message/close handlers including HEARTBEAT).
   let peerWss = null;
   const peerServer = ExpressPeerServer(httpServer, {
-    debug: false,
+    debug: true,
     path: "/",
+    alive_timeout: 60000,
+    key:           "peerjs",
     createWebSocketServer: () => {
       peerWss = new WebSocketServer({ noServer: true });
       return peerWss;
     },
   });
   expressApp.use("/peerjs", peerServer);
+
+  peerServer.on("connection", (client) => {
+    console.log(`[peer] connection id=${client.getId()}`);
+  });
+  peerServer.on("disconnect", (client) => {
+    console.log(`[peer] disconnect id=${client.getId()}`);
+  });
+  peerServer.on("error", (err) => {
+    console.log(`[peer] error`, err);
+  });
 
   // Manual upgrade router. Socket.IO has destroyUpgrade:false so it ignores
   // non-/socket.io upgrades; we handle /peerjs explicitly. Next HMR and
