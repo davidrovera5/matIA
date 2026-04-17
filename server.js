@@ -166,8 +166,6 @@ app.prepare().then(() => {
   const peerServer = ExpressPeerServer(httpServer, {
     debug: true,
     path: "/",
-    alive_timeout: 60000,
-    key:           "peerjs",
     createWebSocketServer: () => {
       peerWss = new WebSocketServer({ noServer: true });
       return peerWss;
@@ -181,9 +179,6 @@ app.prepare().then(() => {
   peerServer.on("disconnect", (client) => {
     console.log(`[peer] disconnect id=${client.getId()}`);
   });
-  peerServer.on("error", (err) => {
-    console.log(`[peer] error`, err);
-  });
 
   // Manual upgrade router. Socket.IO has destroyUpgrade:false so it ignores
   // non-/socket.io upgrades; we handle /peerjs explicitly. Next HMR and
@@ -196,6 +191,10 @@ app.prepare().then(() => {
     if (url.startsWith("/socket.io")) return; // Socket.IO's own listener handles it
     if (url.startsWith("/peerjs")) {
       if (!peerWss) { socket.destroy(); return; }
+      // Strip the /peerjs mount prefix so PeerServer sees the path it expects.
+      // Without this, req.url arrives as /peerjs/peerjs?... and PeerServer's
+      // internal heartbeat path matching fails, dropping the client after ~5s.
+      req.url = url.replace(/^\/peerjs/, "") || "/";
       peerWss.handleUpgrade(req, socket, head, (ws) => {
         peerWss.emit("connection", ws, req);
       });
