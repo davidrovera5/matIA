@@ -3,7 +3,7 @@
 # auto_stop is disabled because room state lives in RAM; stopping the
 # machine would drop all active rooms.
 
-app            = "app-restless-snow-4756"
+app            = "matia-app"
 primary_region = "gru"
 
 [build]
