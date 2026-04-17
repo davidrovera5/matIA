@@ -28,12 +28,12 @@ primary_region = "gru"
   [[services.ports]]
     handlers     = ["tls", "http"]
     port         = 443
-    force_https  = true
     idle_timeout = 300
 
   [[services.ports]]
     handlers     = ["http"]
     port         = 80
+    force_https  = true
     idle_timeout = 300
 
   [services.concurrency]
