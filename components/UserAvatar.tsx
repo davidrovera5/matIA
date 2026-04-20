@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { User } from "@/types";
 import { useVoiceActivity } from "@/hooks/useVoiceActivity";
 
@@ -17,9 +17,27 @@ export default function UserAvatar({
   user, hasMate, isCurrentUser, stream, onActivityChange,
   volume, onVolumeChange,
 }: Props) {
-  const [editing, setEditing] = useState(false);
-  const [draft,   setDraft]   = useState(user.activity ?? "");
-  const inputRef              = useRef<HTMLInputElement>(null);
+  const [editing,   setEditing]   = useState(false);
+  const [draft,     setDraft]     = useState(user.activity ?? "");
+  const [volumeOpen, setVolumeOpen] = useState(false);
+  const inputRef                  = useRef<HTMLInputElement>(null);
+  const popoverRef                = useRef<HTMLDivElement>(null);
+
+  const canControlVolume = !isCurrentUser && !!stream && !!onVolumeChange;
+
+  useEffect(() => {
+    if (!volumeOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) setVolumeOpen(false);
+    };
+    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setVolumeOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown",   onEsc);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown",   onEsc);
+    };
+  }, [volumeOpen]);
 
   if (!editing && draft !== user.activity) setDraft(user.activity);
 
@@ -35,12 +53,16 @@ export default function UserAvatar({
   return (
     <div className="flex flex-col items-center gap-1.5">
 
-      {/* ── Card ─────────────────────────────────────────────────────────────── */}
+      {/* ── Card (click = abrir control de volumen si es peer remoto) ─────── */}
+      <div className="relative" ref={popoverRef}>
       <div
+        onClick={canControlVolume ? () => setVolumeOpen((v) => !v) : undefined}
+        title={canControlVolume ? `Ajustar volumen de ${user.name}` : undefined}
         style={{
           width:        "clamp(64px, 18vw, 96px)",
           height:       "clamp(74px, 21vw, 112px)",
           borderRadius: 22,
+          cursor:       canControlVolume ? "pointer" : "default",
           border:       isSpeaking
             ? "2px solid #84cc16"
             : hasMate
@@ -86,6 +108,69 @@ export default function UserAvatar({
             background: "#84cc16", boxShadow: "0 0 6px #84cc16",
           }} />
         )}
+
+        {/* ── Badge de volumen atenuado (solo si peer remoto con vol < 1) ── */}
+        {canControlVolume && (volume ?? 1) < 1 && (
+          <span
+            style={{
+              position: "absolute", top: 5, left: 6,
+              fontSize: 11, lineHeight: 1,
+              background: "rgba(26,18,11,0.9)",
+              borderRadius: 999,
+              padding: "2px 4px",
+              border: "1px solid rgba(132,204,22,0.25)",
+            }}
+            title={`Volumen al ${Math.round((volume ?? 1) * 100)}%`}
+          >
+            {(volume ?? 1) === 0 ? "🔇" : "🔉"}
+          </span>
+        )}
+      </div>
+
+      {/* ── Popover de volumen ── */}
+      {volumeOpen && canControlVolume && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="absolute left-1/2 -translate-x-1/2 top-full mt-2 rounded-xl shadow-xl z-40"
+          style={{
+            width:          170,
+            padding:        "10px 12px",
+            background:     "rgba(26,18,11,0.97)",
+            border:         "1px solid rgba(132,204,22,0.18)",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] uppercase tracking-wider" style={{ color: "#7a6050" }}>
+              Volumen
+            </span>
+            <span className="text-[10px] font-mono" style={{ color: "#84cc16" }}>
+              {Math.round((volume ?? 1) * 100)}%
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onVolumeChange!((volume ?? 1) === 0 ? 1 : 0)}
+              className="shrink-0 text-xs transition-all hover:scale-110"
+              style={{ color: (volume ?? 1) === 0 ? "#ef4444" : "#7a6050" }}
+              title={(volume ?? 1) === 0 ? "Activar" : "Silenciar"}
+            >
+              {(volume ?? 1) === 0 ? "🔇" : "🔊"}
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={volume ?? 1}
+              onChange={(e) => onVolumeChange!(parseFloat(e.target.value))}
+              className="flex-1 accent-yerba-500"
+              style={{ height: 3, cursor: "pointer" }}
+              aria-label={`Volumen de ${user.name}`}
+            />
+          </div>
+        </div>
+      )}
       </div>
 
       {/* ── Name ── */}
@@ -130,29 +215,6 @@ export default function UserAvatar({
         )}
       </div>
 
-      {/* ── Volume slider (solo para peers remotos con audio) ── */}
-      {!isCurrentUser && stream && onVolumeChange && (
-        <div
-          className="flex items-center gap-1"
-          style={{ width: "clamp(64px, 18vw, 96px)" }}
-          title={`Volumen: ${Math.round((volume ?? 1) * 100)}%`}
-        >
-          <span style={{ fontSize: 10, color: "#4a3020", lineHeight: 1 }}>
-            {(volume ?? 1) === 0 ? "🔇" : "🔊"}
-          </span>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.05}
-            value={volume ?? 1}
-            onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-            className="flex-1 accent-yerba-500"
-            style={{ height: 3, cursor: "pointer" }}
-            aria-label={`Volumen de ${user.name}`}
-          />
-        </div>
-      )}
     </div>
   );
 }
