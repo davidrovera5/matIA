@@ -10,9 +10,12 @@ import MateBounce from "./MateBounce";
 import RemoteAudio from "./RemoteAudio";
 import PipPortal from "./PipPortal";
 import PipMiniView from "./PipMiniView";
+import AmbientPicker from "./AmbientPicker";
 import { usePip, isPipSupported } from "@/hooks/usePip";
 import { useMateSound } from "@/hooks/useSound";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useAmbient } from "@/hooks/useAmbient";
+import { useVoiceActivity } from "@/hooks/useVoiceActivity";
 
 interface Props {
   room: RoomState;
@@ -114,6 +117,11 @@ export default function StudyRoom({
   const [lastSeenCount, setLastSeenCount] = useState(0);
   const [bounceTrigger, setBounceTrigger] = useState(0);
   const [volumes,       setVolumes]       = useState<Map<string, number>>(new Map());
+  const [ambientOpen,   setAmbientOpen]   = useState(false);
+
+  // Ambient: ducking cuando vos habl\u00e1s (no cuando otros hablan)
+  const iAmSpeaking = useVoiceActivity(localStream);
+  const { volumes: ambientVolumes, setVolume: setAmbientVolume, stopAll: stopAllAmbient } = useAmbient(iAmSpeaking);
 
   const handleVolumeChange = (userId: string, v: number) => {
     setVolumes((prev) => {
@@ -385,9 +393,39 @@ export default function StudyRoom({
               Pasar el mate 🧉➡️
             </button>
 
+            <div className="relative order-2">
+              <button
+                onClick={() => setAmbientOpen((v) => !v)}
+                className="px-3 sm:px-5 py-2.5 sm:py-3 font-semibold rounded-full text-xs sm:text-sm transition-all hover:scale-105 active:scale-95"
+                title="Ambiente"
+                style={{
+                  background: Object.values(ambientVolumes).some((v) => v > 0)
+                    ? "linear-gradient(135deg, #4d7c0f, #84cc16)"
+                    : "rgba(38,21,9,0.8)",
+                  border:     Object.values(ambientVolumes).some((v) => v > 0)
+                    ? "1px solid rgba(132,204,22,0.5)"
+                    : "1px solid rgba(132,204,22,0.15)",
+                  color:      Object.values(ambientVolumes).some((v) => v > 0) ? "#f0fdf4" : "#7a6050",
+                  boxShadow:  Object.values(ambientVolumes).some((v) => v > 0)
+                    ? "0 0 14px rgba(132,204,22,0.3)"
+                    : "none",
+                }}
+              >
+                <span className="sm:hidden">🌧</span>
+                <span className="hidden sm:inline">🌧 Ambiente</span>
+              </button>
+              <AmbientPicker
+                open={ambientOpen}
+                volumes={ambientVolumes}
+                onVolume={setAmbientVolume}
+                onStopAll={stopAllAmbient}
+                onClose={() => setAmbientOpen(false)}
+              />
+            </div>
+
             <button
               onClick={toggleMic}
-              className="px-3 sm:px-5 py-2.5 sm:py-3 font-semibold rounded-full text-xs sm:text-sm transition-all hover:scale-105 active:scale-95 order-2"
+              className="px-3 sm:px-5 py-2.5 sm:py-3 font-semibold rounded-full text-xs sm:text-sm transition-all hover:scale-105 active:scale-95 order-3"
               style={{
                 background: isAudioActive ? "linear-gradient(135deg, #14532d, #16a34a)" : "rgba(38,21,9,0.8)",
                 border:     isAudioActive ? "1px solid rgba(132,204,22,0.5)"            : "1px solid rgba(132,204,22,0.15)",
@@ -401,7 +439,7 @@ export default function StudyRoom({
 
             <button
               onClick={onToggleDeafen}
-              className="px-3 sm:px-5 py-2.5 sm:py-3 font-semibold rounded-full text-xs sm:text-sm transition-all hover:scale-105 active:scale-95 order-3"
+              className="px-3 sm:px-5 py-2.5 sm:py-3 font-semibold rounded-full text-xs sm:text-sm transition-all hover:scale-105 active:scale-95 order-4"
               title={isDeafened ? "Volver a escuchar" : "Ensordecer (no escuchar a nadie)"}
               style={{
                 background: isDeafened ? "linear-gradient(135deg, #7f1d1d, #dc2626)" : "rgba(38,21,9,0.8)",
