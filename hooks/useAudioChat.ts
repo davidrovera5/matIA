@@ -212,6 +212,7 @@ export function useAudioChat(
 
       peer.on("open", (myPeerId: string) => {
         peerOpenRef.current = true;
+        setAudioError(null);
         LOG(`Peer open ✅ myPeerId=${myPeerId}`);
         const s = socketRef.current;
         if (!s || unmountedRef.current) return;
@@ -302,6 +303,8 @@ export function useAudioChat(
 
   const toggleDeafen = useCallback(() => setIsDeafened((d) => !d), []);
 
+  const dismissAudioError = useCallback(() => setAudioError(null), []);
+
   return {
     isAudioActive,
     isDeafened,
@@ -311,5 +314,6 @@ export function useAudioChat(
     enableAudio,
     disableAudio,
     toggleDeafen,
+    dismissAudioError,
   };
 }

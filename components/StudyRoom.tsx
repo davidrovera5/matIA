@@ -52,9 +52,11 @@ type SeatProps = {
   localStream: MediaStream | null;
   remoteStreams: Map<string, MediaStream>;
   onActivityChange: (a: string) => void;
+  volumes: Map<string, number>;
+  onVolumeChange: (userId: string, v: number) => void;
 };
 
-function SeatRow({ seats, currentMateIndex, myId, localStream, remoteStreams, onActivityChange }: SeatProps) {
+function SeatRow({ seats, currentMateIndex, myId, localStream, remoteStreams, onActivityChange, volumes, onVolumeChange }: SeatProps) {
   if (!seats.length) return null;
   return (
     <div className="flex items-end justify-center gap-5 flex-wrap">
@@ -66,13 +68,15 @@ function SeatRow({ seats, currentMateIndex, myId, localStream, remoteStreams, on
           isCurrentUser={user.id === myId}
           stream={user.id === myId ? localStream : (remoteStreams.get(user.id) ?? null)}
           onActivityChange={onActivityChange}
+          volume={volumes.get(user.id) ?? 1}
+          onVolumeChange={(v) => onVolumeChange(user.id, v)}
         />
       ))}
     </div>
   );
 }
 
-function SeatCol({ seats, currentMateIndex, myId, localStream, remoteStreams, onActivityChange }: SeatProps) {
+function SeatCol({ seats, currentMateIndex, myId, localStream, remoteStreams, onActivityChange, volumes, onVolumeChange }: SeatProps) {
   if (!seats.length) return null;
   return (
     <div className="flex flex-col items-center justify-center gap-5">
@@ -84,6 +88,8 @@ function SeatCol({ seats, currentMateIndex, myId, localStream, remoteStreams, on
           isCurrentUser={user.id === myId}
           stream={user.id === myId ? localStream : (remoteStreams.get(user.id) ?? null)}
           onActivityChange={onActivityChange}
+          volume={volumes.get(user.id) ?? 1}
+          onVolumeChange={(v) => onVolumeChange(user.id, v)}
         />
       ))}
     </div>
@@ -107,6 +113,26 @@ export default function StudyRoom({
   const [confirmEnd,    setConfirmEnd]    = useState(false);
   const [lastSeenCount, setLastSeenCount] = useState(0);
   const [bounceTrigger, setBounceTrigger] = useState(0);
+  const [volumes,       setVolumes]       = useState<Map<string, number>>(new Map());
+
+  const handleVolumeChange = (userId: string, v: number) => {
+    setVolumes((prev) => {
+      const next = new Map(prev);
+      next.set(userId, v);
+      return next;
+    });
+  };
+
+  // Limpia entradas de usuarios que ya no est\u00e1n en la sala
+  useEffect(() => {
+    setVolumes((prev) => {
+      const ids = new Set(users.map((u) => u.id));
+      let changed = false;
+      const next = new Map(prev);
+      for (const k of next.keys()) if (!ids.has(k)) { next.delete(k); changed = true; }
+      return changed ? next : prev;
+    });
+  }, [users]);
 
   const currentHolder = users[currentMateIndex];
   const iHolder       = currentHolder?.id === myId;
@@ -147,7 +173,11 @@ export default function StudyRoom({
   const togglePip = () => pipOpen ? closePip() : openPip({ width: 300, height: 220 });
 
   const { top, right, bottom, left } = distributeUsers(users);
-  const seatProps = { currentMateIndex, myId, localStream, remoteStreams, onActivityChange: onUpdateActivity };
+  const seatProps = {
+    currentMateIndex, myId, localStream, remoteStreams,
+    onActivityChange: onUpdateActivity,
+    volumes, onVolumeChange: handleVolumeChange,
+  };
 
   return (
     <div
@@ -156,7 +186,7 @@ export default function StudyRoom({
     >
       {iHolder && <MateRain />}
       <MateBounce trigger={bounceTrigger} />
-      <RemoteAudio remoteStreams={remoteStreams} deafened={isDeafened} />
+      <RemoteAudio remoteStreams={remoteStreams} deafened={isDeafened} volumes={volumes} />
 
       {/* ── Document PiP portal ── renders into the floating window ───────── */}
       <PipPortal pipWindow={pipWindow}>
@@ -323,6 +353,8 @@ export default function StudyRoom({
                 isCurrentUser={user.id === myId}
                 stream={user.id === myId ? localStream : (remoteStreams.get(user.id) ?? null)}
                 onActivityChange={onUpdateActivity}
+                volume={volumes.get(user.id) ?? 1}
+                onVolumeChange={(v) => handleVolumeChange(user.id, v)}
               />
             ))}
           </div>

@@ -6,7 +6,7 @@ import StudyRoom from "@/components/StudyRoom";
 import SessionSummary from "@/components/SessionSummary";
 
 /** Discrete top banner for transient connection / permission errors. */
-function ErrorBanner({ message }: { message: string }) {
+function ErrorBanner({ message, onDismiss }: { message: string; onDismiss?: () => void }) {
   return (
     <div
       style={{
@@ -15,7 +15,7 @@ function ErrorBanner({ message }: { message: string }) {
         left:       0,
         right:      0,
         zIndex:     9998,
-        padding:    "8px 16px",
+        padding:    "8px 40px 8px 16px",
         background: "rgba(26,8,8,0.92)",
         borderBottom: "1px solid rgba(239,68,68,0.3)",
         color:      "#fca5a5",
@@ -25,6 +25,27 @@ function ErrorBanner({ message }: { message: string }) {
       }}
     >
       ⚠️ {message}
+      {onDismiss && (
+        <button
+          onClick={onDismiss}
+          aria-label="Cerrar"
+          style={{
+            position:   "absolute",
+            top:        "50%",
+            right:      8,
+            transform:  "translateY(-50%)",
+            background: "transparent",
+            border:     "none",
+            color:      "#fca5a5",
+            cursor:     "pointer",
+            fontSize:   16,
+            lineHeight: 1,
+            padding:    "4px 8px",
+          }}
+        >
+          ✕
+        </button>
+      )}
     </div>
   );
 }
@@ -41,15 +62,17 @@ export default function Home() {
 
   const {
     isAudioActive, isDeafened, localStream, remoteStreams, audioError,
-    enableAudio, disableAudio, toggleDeafen,
+    enableAudio, disableAudio, toggleDeafen, dismissAudioError,
   } = useAudioChat(socketRef, !!(room && roomId));
 
   const topError = connectionError ?? audioError;
+  // Only audioError is dismissible — connectionError self-clears on reconnect.
+  const onDismissTopError = connectionError ? undefined : dismissAudioError;
 
   if (summary) {
     return (
       <>
-        {topError && <ErrorBanner message={topError} />}
+        {topError && <ErrorBanner message={topError} onDismiss={onDismissTopError} />}
         <SessionSummary summary={summary} onDismiss={dismissSummary} />
       </>
     );
@@ -58,7 +81,7 @@ export default function Home() {
   if (!room || !roomId) {
     return (
       <>
-        {topError && <ErrorBanner message={topError} />}
+        {topError && <ErrorBanner message={topError} onDismiss={onDismissTopError} />}
         <Lobby
           onCreate={(name, avatar) => createRoom(name, avatar)}
           onJoin={(id, name, avatar) => joinRoom(id, name, avatar)}
@@ -70,7 +93,7 @@ export default function Home() {
 
   return (
     <>
-      {topError && <ErrorBanner message={topError} />}
+      {topError && <ErrorBanner message={topError} onDismiss={onDismissTopError} />}
       <StudyRoom
         room={room}
         roomId={roomId}

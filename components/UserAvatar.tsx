@@ -9,10 +9,13 @@ interface Props {
   isCurrentUser: boolean;
   stream?: MediaStream | null;
   onActivityChange?: (activity: string) => void;
+  volume?: number;
+  onVolumeChange?: (v: number) => void;
 }
 
 export default function UserAvatar({
   user, hasMate, isCurrentUser, stream, onActivityChange,
+  volume, onVolumeChange,
 }: Props) {
   const [editing, setEditing] = useState(false);
   const [draft,   setDraft]   = useState(user.activity ?? "");
@@ -126,6 +129,30 @@ export default function UserAvatar({
           </button>
         )}
       </div>
+
+      {/* ── Volume slider (solo para peers remotos con audio) ── */}
+      {!isCurrentUser && stream && onVolumeChange && (
+        <div
+          className="flex items-center gap-1"
+          style={{ width: "clamp(64px, 18vw, 96px)" }}
+          title={`Volumen: ${Math.round((volume ?? 1) * 100)}%`}
+        >
+          <span style={{ fontSize: 10, color: "#4a3020", lineHeight: 1 }}>
+            {(volume ?? 1) === 0 ? "🔇" : "🔊"}
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={volume ?? 1}
+            onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
+            className="flex-1 accent-yerba-500"
+            style={{ height: 3, cursor: "pointer" }}
+            aria-label={`Volumen de ${user.name}`}
+          />
+        </div>
+      )}
     </div>
   );
 }
